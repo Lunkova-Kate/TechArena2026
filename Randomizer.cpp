@@ -89,15 +89,15 @@ public:
     }
 };
 
-int main() {
-    Randomizer randomizer;
+// int main() {
+//     Randomizer randomizer;
 
-    int commandCount = 20;
-    std::vector<int> commands = randomizer.generateTest(commandCount);
+//     int commandCount = 20;
+//     std::vector<int> commands = randomizer.generateTest(commandCount);
 
-    for (int command : commands) {
-        std::cout << command << '\n';
-    }
+//     for (int command : commands) {
+//         std::cout << command << '\n';
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
