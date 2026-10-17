@@ -84,8 +84,6 @@ Result* Strategy::processPut(Instruction &instr) {
 
     // если не найдено подходящего сегмента, расширяем траншею
     if (maxLength < instr.getX()) {
-        int oldLength = _lengthTrench;
-
         do {
             _lengthTrench += 20;
             ++n;
@@ -95,23 +93,29 @@ Result* Strategy::processPut(Instruction &instr) {
             maxLength = maxLengthFreeSegment();
         } while (maxLength < instr.getX());
 
-        int startOffset = oldLength;
+        for (const auto& segment : _freeSegments) {
+            int startOffset = segment.first;
+            int freeLength = segment.second;
 
-        for (int i = startOffset; i < startOffset + instr.getX(); ++i) {
-            _pipes.set(i);
+            if (freeLength >= instr.getX()) {
+                for (int i = startOffset;
+                    i < startOffset + instr.getX(); ++i) {
+                    _pipes.set(i);
+                }
+
+                int pid = _nextPid++;
+                Pipe_t pipe{pid, instr.getX(), startOffset};
+                _pipesInfo[pid] = pipe;
+
+                instr.getResult()->setLength(n);
+                instr.getResult()->setDistance(startOffset);
+
+                return instr.getResult();
+            }
         }
-
-        int pid = _nextPid++;
-        Pipe_t pipe{pid, instr.getX(), startOffset};
-        _pipesInfo[pid] = pipe;
-
-        instr.getResult()->setLength(n);
-        instr.getResult()->setDistance(startOffset);
-
-        return instr.getResult();
     }
 
-    return instr.getResult();
+    return nullptr;
 }
 
 Result* Strategy::processRemove(Instruction& instr) {
