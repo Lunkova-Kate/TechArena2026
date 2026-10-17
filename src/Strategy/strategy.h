@@ -3,7 +3,6 @@
 
 #include <map>
 #include "instruction.h"
-#include "bitArray.h"
 
 using namespace std;
 
@@ -15,7 +14,6 @@ typedef struct Pipe {
 
 
 class Strategy {
-    BitArray<> _pipes;
     int _lengthTrench;
     map<int, Pipe_t> _pipesInfo; // pid -> Pipe_t
     map<int, int> _freeSegments; // начало -> длина

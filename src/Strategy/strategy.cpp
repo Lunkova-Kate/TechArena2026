@@ -4,7 +4,7 @@
 #include <iostream>
 #include <iterator>
 
-Strategy::Strategy(): _pipes(), _lengthTrench(0), _pipesInfo(), _freeSegments() {}
+Strategy::Strategy(): _lengthTrench(0), _pipesInfo(), _freeSegments() {}
 Strategy::~Strategy(){}
 
 Result* Strategy::process(Instruction& instr){
@@ -22,16 +22,10 @@ Result* Strategy::process(Instruction& instr){
 Result* Strategy::processPut(Instruction &instr) {
     const int x = instr.getX();
     int n = 0;
-    if (_pipes.empty()) {
+    if (_lengthTrench == 0) {
         while (_lengthTrench < x) {
             _lengthTrench += 20;
             n++;
-        }
-
-        _pipes.resize(_lengthTrench);
-
-        for (int i = 0; i < x; ++i) {
-            _pipes.set(i);
         }
 
         int pid = _nextPid++;
@@ -60,10 +54,6 @@ Result* Strategy::processPut(Instruction &instr) {
     if (best != _freeSegments.end()) {
         const int startOffset = best->first;
         const int length = best->second;
-
-        for (int i = startOffset; i < startOffset + x; ++i) {
-            _pipes.set(i);
-        }
 
         int pid = _nextPid++;
         Pipe_t pipe{pid, x, startOffset};
@@ -95,13 +85,8 @@ Result* Strategy::processPut(Instruction &instr) {
     do {
         _lengthTrench += 20;
         ++n;
-        _pipes.resize(_lengthTrench);
         freeLen += 20;
     } while (freeLen < x);
-
-    for (int i = offset; i < offset + x; i++) {
-        _pipes.set(i);
-    }
 
     int pid = _nextPid++;
     Pipe_t pipe{pid, x, offset};
@@ -130,10 +115,6 @@ Result* Strategy::processRemove(Instruction& instr) {
     }
 
     Pipe_t pipe = it->second;
-
-    for (int i = pipe.offset; i < pipe.offset + pipe.length; ++i) {
-        _pipes.reset(i);
-    }
 
     _pipesInfo.erase(it);
 
