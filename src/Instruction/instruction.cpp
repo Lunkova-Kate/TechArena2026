@@ -59,3 +59,11 @@ int Result::getLength(){
 int Result::getDistance(){
     return _distance;
 }
+
+void Result::setLength(int len) {
+    _length = len;
+}
+
+void Result::setDistance(int dist) {
+    _distance = dist;
+}

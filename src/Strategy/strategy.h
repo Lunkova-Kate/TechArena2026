@@ -3,6 +3,7 @@
 
 #include <map>
 #include "instruction.h"
+#include "bitarray.h"
 
 using namespace std;
 
@@ -14,7 +15,8 @@ typedef struct Pipe {
 
 
 class Strategy {
-    map<int, Pipe_t> _pipes;
+    BitArray<> _pipes;
+    int _lengthTrench;
 
     Result* processPut(Instruction& instr);
     Result* processRemove(Instruction& instr);

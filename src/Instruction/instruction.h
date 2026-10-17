@@ -19,7 +19,6 @@ enum TypeResult{
 class Instruction;
 
 class Result{
-    friend Instruction;
 private:
     TypeResult _type;
     int _length;
@@ -30,6 +29,8 @@ public:
     ~Result();
     int getLength();
     int getDistance();
+    void setLength(int len);
+    void setDistance(int dist);
 };
 
 class Instruction{
