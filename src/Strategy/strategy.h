@@ -23,15 +23,11 @@ class Strategy {
 
     Result* processPut(Instruction& instr);
     Result* processRemove(Instruction& instr);
-    void findZeroSegment();
-    int maxLengthFreeSegment();
 public:
     Strategy();
     ~Strategy();
 
     Result* process(Instruction& instr);
-
-    void reset();
 };
 
 #endif // TECHARENA2026_STRATEGY_H
