@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <random>
+#include <string>
 #include <vector>
 
 // 10
@@ -87,6 +89,20 @@ public:
         commands.push_back(END);
         return commands;
     }
+
+    bool saveTest(const std::vector<int>& commands, const std::string& fileName) {
+        std::ofstream file(fileName);
+
+        if (!file.is_open()) {
+            return false;
+        }
+
+        for (int command : commands) {
+            file << command << '\n';
+        }
+
+        return file.good();
+    }
 };
 
 // int main() {
@@ -95,9 +111,11 @@ public:
 //     int commandCount = 20;
 //     std::vector<int> commands = randomizer.generateTest(commandCount);
 
-//     for (int command : commands) {
-//         std::cout << command << '\n';
+//     if (!randomizer.saveTest(commands, "random_test.in")) {
+//         std::cerr << "I cant save the file\n";
+//         return 1;
 //     }
 
+//     std::cout << "Тест сохранён в random_test.in\n";
 //     return 0;
 // }
