@@ -308,7 +308,7 @@ public:
             reset(n);
             return *this;
         }
-        if(n > sizeInBits){
+        if(n >= sizeInBits){
             std::cerr << "stack overflow (set(n))\n";
             return *this;
         }
@@ -339,7 +339,7 @@ public:
 *   @Returned   : BitArray &
 ***************************************************************************/
     BitArray& reset(size_t n){
-        if(n > sizeInBits){
+        if(n >= sizeInBits){
             std::cerr << "stack overflow (reset(n))\n";
             return *this;
         }
