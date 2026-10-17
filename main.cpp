@@ -1,5 +1,6 @@
 #include <map>
 #include <iostream>
+#include <iterator>
 #include <string>
 
 using namespace std;
@@ -309,7 +310,7 @@ public:
             reset(n);
             return *this;
         }
-        if(n > sizeInBits){
+        if(n >= sizeInBits){
             std::cerr << "stack overflow (set(n))\n";
             return *this;
         }
@@ -340,7 +341,7 @@ public:
 *   @Returned   : BitArray &
 ***************************************************************************/
     BitArray& reset(size_t n){
-        if(n > sizeInBits){
+        if(n >= sizeInBits){
             std::cerr << "stack overflow (reset(n))\n";
             return *this;
         }
@@ -727,24 +728,25 @@ Result* Strategy::process(Instruction& instr){
 }
 
 Result* Strategy::processPut(Instruction &instr) {
+    const int x = instr.getX();
     int n = 0;
     if (_pipes.empty()) {
-        while (_lengthTrench < instr.getX()) {
+        while (_lengthTrench < x) {
             _lengthTrench += 20;
             n++;
         }
 
         _pipes.resize(_lengthTrench);
 
-        for (int i = 0; i < instr.getX(); ++i) {
+        for (int i = 0; i < x; ++i) {
             _pipes.set(i);
         }
 
         int pid = _nextPid++;
-        Pipe_t pipe{pid, instr.getX(), 0};
+        Pipe_t pipe{pid, x, 0};
         _pipesInfo[pid] = pipe;
 
-        if(pipe.length < _lengthTrench){
+        if (pipe.length < _lengthTrench) {
             _freeSegments[pipe.length] = _lengthTrench - pipe.length;
         }
 
@@ -754,54 +756,48 @@ Result* Strategy::processPut(Instruction &instr) {
         return instr.getResult();
     }
 
-    for (const auto& segment : _freeSegments) {
-        int startOffset = segment.first;
-        int length = segment.second;
-
-        if (length == instr.getX()) {
-            for (int i = startOffset; i < startOffset + instr.getX(); ++i) {
-                _pipes.set(i);
-            }
-
-            int pid = _nextPid++;
-            Pipe_t pipe{pid, instr.getX(), startOffset};
-            _pipesInfo[pid] = pipe;
-
-            _freeSegments.erase(_freeSegments.find(startOffset));
-
-            instr.getResult()->setLength(0);
-            instr.getResult()->setDistance(startOffset);
-
-            return instr.getResult();
-        }
-
-        // Если свободный сегмент длиннее трубы
-        if (length > instr.getX()) {
-            for (int i = startOffset; i < startOffset + instr.getX(); ++i) {
-                _pipes.set(i);
-            }
-
-            int pid = _nextPid++;
-            Pipe_t pipe{pid, instr.getX(), startOffset};
-            _pipesInfo[pid] = pipe;
-
-            auto it = _freeSegments.find(startOffset);
-            _freeSegments.erase(it);
-            _freeSegments[startOffset + instr.getX()] = length - instr.getX();
-
-            instr.getResult()->setLength(0);
-            instr.getResult()->setDistance(startOffset);
-
-            return instr.getResult();
+    auto best = _freeSegments.end();
+    for (auto it = _freeSegments.begin(); it != _freeSegments.end(); ++it) {
+        if (it->second < x) continue;
+        if (best == _freeSegments.end() || it->second < best->second) {
+            best = it;
+            if (it->second == x) break;
         }
     }
 
-    auto last = _freeSegments.rbegin();
+    if (best != _freeSegments.end()) {
+        const int startOffset = best->first;
+        const int length = best->second;
+
+        for (int i = startOffset; i < startOffset + x; ++i) {
+            _pipes.set(i);
+        }
+
+        int pid = _nextPid++;
+        Pipe_t pipe{pid, x, startOffset};
+        _pipesInfo[pid] = pipe;
+
+        _freeSegments.erase(best);
+        if (length > x) {
+            _freeSegments[startOffset + x] = length - x;
+        }
+
+        instr.getResult()->setLength(0);
+        instr.getResult()->setDistance(startOffset);
+
+        return instr.getResult();
+    }
+
     int freeLen = 0;
     int offset = _lengthTrench;
-    if(last->first + last->second == _lengthTrench){
-        freeLen = last->second;
-        offset = last->first;
+    bool tailFree = false;
+    if (!_freeSegments.empty()) {
+        auto last = prev(_freeSegments.end());
+        if (last->first + last->second == _lengthTrench) {
+            tailFree = true;
+            freeLen = last->second;
+            offset = last->first;
+        }
     }
 
     do {
@@ -809,21 +805,24 @@ Result* Strategy::processPut(Instruction &instr) {
         ++n;
         _pipes.resize(_lengthTrench);
         freeLen += 20;
+    } while (freeLen < x);
 
-    } while (freeLen < instr.getX());
-
-    for(int i = offset; i < offset + instr.getX(); i++){
+    for (int i = offset; i < offset + x; i++) {
         _pipes.set(i);
     }
 
-    if(offset == last->first){
+    int pid = _nextPid++;
+    Pipe_t pipe{pid, x, offset};
+    _pipesInfo[pid] = pipe;
+
+    if (tailFree) {
         _freeSegments.erase(prev(_freeSegments.end()));
     }
-    if(offset + instr.getX() < _lengthTrench){
-        _freeSegments[offset + instr.getX()] = freeLen - instr.getX();
+    if (offset + x < _lengthTrench) {
+        _freeSegments[offset + x] = freeLen - x;
     }
 
-    instr.getResult()->setLength(0);
+    instr.getResult()->setLength(n);
     instr.getResult()->setDistance(offset);
 
     return instr.getResult();
@@ -849,32 +848,23 @@ Result* Strategy::processRemove(Instruction& instr) {
     instr.getResult()->setLength(pipe.length);
     instr.getResult()->setDistance(pipe.offset);
 
-    auto newIt = _freeSegments.find(pipe.offset + pipe.length);
-    if(pipe.offset > 0 && _pipes[pipe.offset - 1]){
-        if(newIt != _freeSegments.end()){
-            int len = newIt->second;
-            _freeSegments.erase(newIt);
-            _freeSegments[pipe.offset] = pipe.length + len;
-        }
-        else{
-            _freeSegments[pipe.offset] = pipe.length;
-        }
-    }
-    else{
-        int pos = pipe.offset - 1;
-        while(pos > 0 && _pipes[pos - 1]){
-            pos--;
-        }
+    int start = pipe.offset;
+    int len = pipe.length;
 
-        if(newIt != _freeSegments.end()){
-            int len = newIt->second;
-            _freeSegments.erase(newIt);
-            _freeSegments[pos] = pipe.offset - pos + pipe.length + len;
-        }
-        else{
-            _freeSegments[pos] = pipe.offset - pos + pipe.length;
+    auto next = _freeSegments.lower_bound(start);
+    if (next != _freeSegments.end() && start + len == next->first) {
+        len += next->second;
+        next = _freeSegments.erase(next);
+    }
+    if (next != _freeSegments.begin()) {
+        auto before = prev(next);
+        if (before->first + before->second == start) {
+            start = before->first;
+            len += before->second;
+            _freeSegments.erase(before);
         }
     }
+    _freeSegments[start] = len;
 
     return instr.getResult();
 }
