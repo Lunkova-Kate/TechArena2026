@@ -485,6 +485,8 @@ public:
         }
         return bytes;
     }
+
+    
 };
 
 
@@ -576,5 +578,6 @@ BitArray<Align> operator^(const BitArray<Align> & b1, const BitArray<Align> & b2
     other ^= b2;
     return other;
 }
+
 
 #endif // TECHARENA2026_BITARRAY_H

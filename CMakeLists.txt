@@ -9,7 +9,7 @@ file(GLOB SOURCES CONFIGURE_DEPENDS "src/*.cpp" "src/**/*.cpp" "src/**/*.h")
 
 add_executable(app ${SOURCES})
 
-target_include_directories(app PRIVATE src src/strategy src/instruction src/BitArray)
+target_include_directories(app PRIVATE src src/Strategy src/Instruction src/BitArray)
 
 target_compile_options(app PRIVATE
         -Wall
